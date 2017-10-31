@@ -260,6 +260,13 @@ class YAML_CPP_API BadFile : public Exception {
   BadFile(const BadFile&) = default;
   virtual ~BadFile() YAML_CPP_NOEXCEPT;
 };
+
+class YAML_CPP_API InvalidAnchor : public Exception {
+public:
+	InvalidAnchor() : Exception(Mark::null_mark(), ErrorMsg::INVALID_ANCHOR) {}
+	InvalidAnchor(const InvalidAnchor&) = default;
+	virtual ~InvalidAnchor() YAML_CPP_NOEXCEPT;
+};
 }
 
 #undef YAML_CPP_NOEXCEPT

@@ -32,6 +32,8 @@ class EmitFromEvents : public EventHandler {
   virtual void OnScalar(const Mark& mark, const std::string& tag,
                         anchor_t anchor, const std::string& value);
 
+  virtual void OnAnchor(const Mark& mark, anchor_t anchor, const std::string& value);
+
   virtual void OnSequenceStart(const Mark& mark, const std::string& tag,
                                anchor_t anchor, EmitterStyle::value style);
   virtual void OnSequenceEnd();

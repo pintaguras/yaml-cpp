@@ -1,7 +1,9 @@
 #include "directives.h"
 
+#include "yaml-cpp/exceptions.h"
+
 namespace YAML {
-Directives::Directives() {
+Directives::Directives() : m_curAnchor(0) {
   // version
   version.isDefault = true;
   version.major = 1;
@@ -17,6 +19,21 @@ const std::string Directives::TranslateTagHandle(
     return handle;
   }
 
+  return it->second;
+}
+
+
+anchor_t Directives::RegisterAnchor(const std::string& name) {
+  if (name.empty())
+    return NullAnchor;
+
+  return m_anchors[name] = ++m_curAnchor;
+}
+
+anchor_t Directives::LookupAnchor(const std::string& name) const {
+  Anchors::const_iterator it = m_anchors.find(name);
+  if (it == m_anchors.end())
+    throw InvalidAnchor();
   return it->second;
 }
 }

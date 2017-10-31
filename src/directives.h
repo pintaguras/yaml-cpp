@@ -10,6 +10,8 @@
 #include <string>
 #include <map>
 
+#include "yaml-cpp/anchor.h"
+
 namespace YAML {
 struct Version {
   bool isDefault;
@@ -23,6 +25,13 @@ struct Directives {
 
   Version version;
   std::map<std::string, std::string> tags;
+
+  anchor_t RegisterAnchor(const std::string& name);
+  anchor_t LookupAnchor(const std::string& name) const;
+
+  typedef std::map<std::string, anchor_t> Anchors;
+  Anchors m_anchors;
+  anchor_t m_curAnchor;
 };
 }
 

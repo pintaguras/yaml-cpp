@@ -43,6 +43,10 @@ void EmitFromEvents::OnScalar(const Mark&, const std::string& tag,
   m_emitter << value;
 }
 
+void EmitFromEvents::OnAnchor(const Mark& mark, anchor_t anchor, const std::string& value) {
+  //?
+}
+
 void EmitFromEvents::OnSequenceStart(const Mark&, const std::string& tag,
                                      anchor_t anchor,
                                      EmitterStyle::value style) {

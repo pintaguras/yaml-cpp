@@ -7,6 +7,7 @@
 #include "singledocparser.h"
 #include "tag.h"
 #include "token.h"
+#include "directives.h"
 #include "yaml-cpp/emitterstyle.h"
 #include "yaml-cpp/eventhandler.h"
 #include "yaml-cpp/exceptions.h"  // IWYU pragma: keep
@@ -14,11 +15,10 @@
 #include "yaml-cpp/null.h"
 
 namespace YAML {
-SingleDocParser::SingleDocParser(Scanner& scanner, const Directives& directives)
+SingleDocParser::SingleDocParser(Scanner& scanner, Directives& directives)
     : m_scanner(scanner),
       m_directives(directives),
-      m_pCollectionStack(new CollectionStack),
-      m_curAnchor(0) {}
+      m_pCollectionStack(new CollectionStack) {}
 
 SingleDocParser::~SingleDocParser() {}
 
@@ -27,7 +27,6 @@ SingleDocParser::~SingleDocParser() {}
 // . Throws a ParserException on error.
 void SingleDocParser::HandleDocument(EventHandler& eventHandler) {
   assert(!m_scanner.empty());  // guaranteed that there are tokens
-  assert(!m_curAnchor);
 
   eventHandler.OnDocumentStart(m_scanner.peek().mark);
 
@@ -65,14 +64,18 @@ void SingleDocParser::HandleNode(EventHandler& eventHandler) {
 
   // special case: an alias node
   if (m_scanner.peek().type == Token::ALIAS) {
-    eventHandler.OnAlias(mark, LookupAnchor(mark, m_scanner.peek().value));
+    eventHandler.OnAlias(mark, m_directives.LookupAnchor(m_scanner.peek().value));
     m_scanner.pop();
     return;
   }
 
   std::string tag;
+  std::string anchor_string;
   anchor_t anchor;
-  ParseProperties(tag, anchor);
+  ParseProperties(tag, anchor, anchor_string);
+
+  if (anchor != NullAnchor)
+    eventHandler.OnAnchor(mark, anchor, anchor_string);
 
   const Token& token = m_scanner.peek();
 
@@ -356,7 +359,7 @@ void SingleDocParser::HandleCompactMapWithNoKey(EventHandler& eventHandler) {
 
 // ParseProperties
 // . Grabs any tag or anchor tokens and deals with them.
-void SingleDocParser::ParseProperties(std::string& tag, anchor_t& anchor) {
+void SingleDocParser::ParseProperties(std::string& tag, anchor_t& anchor, std::string& anchor_string) {
   tag.clear();
   anchor = NullAnchor;
 
@@ -369,7 +372,7 @@ void SingleDocParser::ParseProperties(std::string& tag, anchor_t& anchor) {
         ParseTag(tag);
         break;
       case Token::ANCHOR:
-        ParseAnchor(anchor);
+        ParseAnchor(anchor, anchor_string);
         break;
       default:
         return;
@@ -387,28 +390,14 @@ void SingleDocParser::ParseTag(std::string& tag) {
   m_scanner.pop();
 }
 
-void SingleDocParser::ParseAnchor(anchor_t& anchor) {
+void SingleDocParser::ParseAnchor(anchor_t& anchor, std::string & anchor_string) {
   Token& token = m_scanner.peek();
   if (anchor)
     throw ParserException(token.mark, ErrorMsg::MULTIPLE_ANCHORS);
 
-  anchor = RegisterAnchor(token.value);
+  anchor_string = token.value;
+  anchor = m_directives.RegisterAnchor(token.value);
   m_scanner.pop();
 }
 
-anchor_t SingleDocParser::RegisterAnchor(const std::string& name) {
-  if (name.empty())
-    return NullAnchor;
-
-  return m_anchors[name] = ++m_curAnchor;
-}
-
-anchor_t SingleDocParser::LookupAnchor(const Mark& mark,
-                                       const std::string& name) const {
-  Anchors::const_iterator it = m_anchors.find(name);
-  if (it == m_anchors.end())
-    throw ParserException(mark, ErrorMsg::UNKNOWN_ANCHOR);
-
-  return it->second;
-}
 }

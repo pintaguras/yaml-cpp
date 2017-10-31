@@ -27,6 +27,8 @@ class EventHandler {
   virtual void OnScalar(const Mark& mark, const std::string& tag,
                         anchor_t anchor, const std::string& value) = 0;
 
+  virtual void OnAnchor(const Mark& mark, anchor_t anchor, const std::string& value) = 0;
+
   virtual void OnSequenceStart(const Mark& mark, const std::string& tag,
                                anchor_t anchor, EmitterStyle::value style) = 0;
   virtual void OnSequenceEnd() = 0;
